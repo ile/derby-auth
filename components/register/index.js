@@ -1,5 +1,6 @@
-var check = require('validator').check,
-    sanitize = require('validator').sanitize,
+var validator = require('../../node_modules/validator/validator-min'),
+    check = validator.check,
+    sanitize = validator.sanitize,
     utils = require('../../utils')
 
 exports.init = function(model) {
@@ -49,7 +50,7 @@ exports.create = function(model, dom) {
     model.on('set', 'errors.*', function(error){
         var m = model.get(),
             canSubmit = false;
-        if (!m.errors.username && !m.errors.email && !m.errors.passwordConfirmation && !m.errors .password &&
+        if (!m.errors.username && !m.errors.email && !m.errors.passwordConfirmation && !m.errors.password &&
             !!m.username && !!m.email && !!m.passwordConfirmation && !!m.password) {
             canSubmit = true;
         }
