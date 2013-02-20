@@ -78,33 +78,8 @@ function setupMiddleware(strategies, options) {
         !!sess.userId && model.fetch("users." + sess.userId, setupUser) || setupUser();
 
         setupPassport(strategies, options);
-        setupPublicCollection(model, options);
 
         return next();
-    }
-}
-
-function setupPublicCollection(model, options) {
-
-    function setListener(method, path) {
-
-        function updatePublicCollection()
-        {
-            console.log(method + ' - ' + path);
-            console.log(arguments);
-            model[method]('users_public.' + arguments[0] + '.' + path, arguments[1]);
-        }
-
-        model.on(method, 'users.*.' + options.public[i], updatePublicCollection);
-    }
-
-    if (typeof options.public === 'object')
-    {
-        for (var i = 0; i < options.public.length; i++) {
-            setListener('set', options.public[i]);
-            setListener('setNull', options.public[i]);
-            setListener('del', options.public[i]);
-        }
     }
 }
 
