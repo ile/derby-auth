@@ -77,8 +77,6 @@ function setupMiddleware(strategies, options) {
 
         !!sess.userId && model.fetch("users." + sess.userId, setupUser) || setupUser();
 
-        setupPassport(strategies, options);
-
         return next();
     }
 }
