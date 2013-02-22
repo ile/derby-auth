@@ -1,6 +1,15 @@
+/**
+ * FIXME https://github.com/codeparty/racer/issues/37
+ */
+function bustedSession(guard) {
+    return (!guard || !guard.session || !guard.session.userId) && !isServer(guard);
+}
+var SESSION_INVALIDATED_ERROR = 'Session invalidated in accessControl callback';
+var isServer = function(guard) {
+    return (!!guard.session && !!guard.session.req && guard.session.req._isServer);
+}
 
-
-var setupQueries = function(store, customAcessControl) {
+var setupQueries = function(store) {
 
     /**
      * Main function for subscribing to user query
@@ -13,10 +22,9 @@ var setupQueries = function(store, customAcessControl) {
             .limit(1);
     });
     store.queryAccess('users', 'withId', function(id, accept, err) {
-        if (!(this.session && this.session.userId)) {
-            return accept(false); // https://github.com/codeparty/racer/issues/37
-        }
-        return accept(id === this.session.userId);
+//        if (bustedSession(this)) return err(SESSION_INVALIDATED_ERROR);
+        if (bustedSession(this)) return accept(false);
+        accept(id === this.session.userId);
     });
 
     // Functions for finding if user exists with given criteria
@@ -58,9 +66,9 @@ var setupQueries = function(store, customAcessControl) {
             .where('auth.local.hashed_password')
             .equals(hashed_password);
 
-            // With this enabled, the query finds 0 results. I'm assuming where('..password') and only('..username') conflict.
-            // It's ok, they'd have to know both uname & pw to hack this query anyway.
-            //.only('auth.local.username').limit(1);
+        // With this enabled, the query finds 0 results. I'm assuming where('..password') and only('..username') conflict.
+        // It's ok, they'd have to know both uname & pw to hack this query anyway.
+        //.only('auth.local.username').limit(1);
     });
     store.queryAccess('users', 'withLogin', function(username, hashed_password, accept, err) {
         return accept(true); // for now
@@ -87,29 +95,33 @@ var setupQueries = function(store, customAcessControl) {
  * @param {customAccessControl} allows you to setup your own readPathAccess and writeAccess. If not passed in,
  *  the default of "user can only read and write anything to self" use used
  */
-var setupAccessControl = function(store, customAccessControl) {
+var setupAccessControl = function(store) {
 
     //Callback signatures here have variable length, eg callback(captures..., next);
     //Is using arguments[n] the correct way to handle (typeof this !== "undefined" && this !== null);
 
     store.readPathAccess('users.*', function() { // captures, next) ->
-        if (!(this.session && this.session.userId)) {
-            return; // https://github.com/codeparty/racer/issues/37
-        }
+        var accept = arguments[arguments.length - 2],
+            err = arguments[arguments.length -1];
+
+//        if (bustedSession(this)) return err(SESSION_INVALIDATED_ERROR);
+        if (bustedSession(this)) return accept(false);
+
         var captures = arguments[0],
-            accept = arguments[arguments.length - 2],
-            sameSession = captures === this.session.userId,
+            sameSession = (captures === this.session.userId),
             isServer = false;//!this.req.socket; //TODO how to determine if request came from server, as in REST?
         return accept(sameSession || isServer);
     });
 
     store.writeAccess('*', 'users.*', function() { // captures, value, next) ->
-        if (!(this.session && this.session.userId)) {
-            return; // https://github.com/codeparty/racer/issues/37
-        }
+        var accept = arguments[arguments.length - 2],
+            err = arguments[arguments.length -1];
+
+//        if (bustedSession(this)) return err(SESSION_INVALIDATED_ERROR);
+        if (bustedSession(this)) return accept(false);
+
         var captures = arguments[0],
-            accept = arguments[arguments.length - 2],
-            sameSession = captures.split('.')[0] === this.session.userId,
+            sameSession = (captures.split('.')[0] === this.session.userId),
             isServer = false;//!this.req.socket;
         return accept(sameSession || isServer);
     });
@@ -129,3 +141,6 @@ module.exports = function(store, customAccessControl) {
         setupAccessControl(store);
     }
 };
+module.exports.SESSION_INVALIDATED_ERROR = SESSION_INVALIDATED_ERROR;
+module.exports.bustedSession = bustedSession;
+module.exports.isServer = isServer;
