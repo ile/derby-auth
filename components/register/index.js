@@ -40,10 +40,10 @@ exports.create = function(model, dom) {
     model.on('set', 'password', function(password){
         if (!password) return
         try {
-            check(password).len(6);
+            check(password).len(8);
             model.set('errors.password', '');
         } catch (err) {
-            model.set('errors.password', 'Password must be at least 6 characters');
+            model.set('errors.password', 'Password must be at least 8 characters');
         }
     });
 

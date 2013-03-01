@@ -8,22 +8,22 @@ exports.create = function(model, dom) {
     if (!window.$) require('../../vendor/jquery-1.8.3.min.js');
 }
 
-exports.usernameBlur = function(){
+exports.emailBlur = function(){
     // check username registered
     var model = this.model,
         rootModel = model.parent().parent(),
-        q = rootModel.query('users').withUsername(model.get('username'));
+        q = rootModel.query('users').withEmail(model.get('email'));
     rootModel.fetch(q, function(err, users) {
         try {
             if (err) throw new Error(err);
             var userObj = users.at(0).get()
             if (!userObj) {
-                throw new Error("Username not registered. Make sure you're using the same capitalization you used to register!");
+                throw new Error("Email does not exist. Make sure you're using the same capitalization you used to register!");
             } else {
-                model.set('errors.username', '');
+                model.set('errors.email', '');
             }
         } catch (err) {
-            model.set('errors.username', err.message);
+            model.set('errors.email', err.message);
         }
     });
 }
@@ -34,6 +34,7 @@ exports.loginSubmit = function(e, el){
 
 exports.showPasswordReset = function() {
     document.getElementById('derby-auth-password-reset').style.display = "";
+    window.setTimeout(function () { document.getElementById('derby-auth-password-reset-input').focus() }, 0);
 }
 
 exports.submitPasswordReset = function() {
@@ -46,7 +47,7 @@ exports.submitPasswordReset = function() {
             if (err) throw new Error(err);
             var userObj = users.at(0).get()
             if (!userObj) {
-                throw new Error('Email not registered.');
+                throw new Error('Email does not exist.');
             } else {
                 model.set('errors.passwordReset', '');
                 $.ajax({

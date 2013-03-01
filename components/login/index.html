@@ -2,9 +2,9 @@
     {#with :self}
         <form id="derby-auth-login" action='/login' method='post'>
 
-            <div class="control-group {#if .errors.username}error{/}">
-                <input type='text' name="username" placeholder="Username" x-bind="blur:usernameBlur" value="{.username}"/>
-                <span class="help-inline">{.errors.username}</span>
+            <div class="control-group {#if .errors.email}error{/}">
+                <input type='text' name="email" placeholder="Email" x-bind="blur:emailBlur" value="{.email}"/>
+                <span class="help-inline">{.errors.email}</span>
             </div>
 
             <div class="control-group {#if .errors.password}error{/}">
@@ -12,17 +12,25 @@
                 <span class="help-inline">{.errors.password}</span>
             </div>
 
-            <input type="submit" value="Login" class="btn"/>
+            <div class="control-group">
+                <input type="submit" value="Login" class="btn"/>
+            </div>
+
+            <div class="control-group">
+                <a x-bind="click:showPasswordReset" href="#">Forgot your password?</a>
+            </div>
+
         </form>
 
-        <a x-bind="click:showPasswordReset">Forgot Password</a>
-        <form id="derby-auth-password-reset" x-bind="submit:submitPasswordReset" method='post' style='display:none;' class='well'>
-            <h3>Email New Password</h3>
+        <form id="derby-auth-password-reset" action="/password-reset" x-bind="submit:submitPasswordReset" method='post' style='display:none;' class='well'>
+            <h3>Forgot Password?</h3>
+            Enter your email address
+            <br><br>
 
             <div class="alert alert-success">{.success.passwordReset}</div>
 
             <div class="control-group {#if .errors.passwordReset}error{/}">
-                <input type='text' name="email" placeholder="Email" value="{.passwordResetEmail}"/>
+                <input id="derby-auth-password-reset-input" type='text' name="email" placeholder="Email" value="{.passwordResetEmail}"/>
                 <span class="help-inline">{.errors.passwordReset}</span>
             </div>
 
