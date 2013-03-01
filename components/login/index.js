@@ -15,8 +15,9 @@ exports.emailBlur = function(){
         q = rootModel.query('users').withEmail(model.get('email'));
     rootModel.fetch(q, function(err, users) {
         try {
+            console.log(users.get())
             if (err) throw new Error(err);
-            var userObj = users.at(0).get()
+            var userObj = users.get()
             if (!userObj) {
                 throw new Error("Email does not exist. Make sure you're using the same capitalization you used to register!");
             } else {
@@ -45,7 +46,7 @@ exports.submitPasswordReset = function() {
     rootModel.fetch(q, function(err, users) {
         try {
             if (err) throw new Error(err);
-            var userObj = users.at(0).get()
+            var userObj = users.get()
             if (!userObj) {
                 throw new Error('Email does not exist.');
             } else {
