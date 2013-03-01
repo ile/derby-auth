@@ -37,7 +37,7 @@ var setupQueries = function(store) {
         return this
             .where('auth.local.username')
             .equals(username)
-            .except('auth.local.hashed_password').limit(1);
+            .except('auth.local.hashed_password').one();
     });
     store.queryAccess('users', 'withUsername', function(username, accept, err) {
         return accept(true); // for now
