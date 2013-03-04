@@ -19,7 +19,7 @@ var setupQueries = function(store) {
             .where('id')
             .equals(id)
             //.except('auth.local.hashed_password')
-            .limit(1);
+            .one();
     });
     store.queryAccess('users', 'withId', function(id, accept, err) {
 //        if (bustedSession(this)) return err(SESSION_INVALIDATED_ERROR);
@@ -37,7 +37,8 @@ var setupQueries = function(store) {
         return this
             .where('auth.local.username')
             .equals(username)
-            .except('auth.local.hashed_password').one();
+            .except('auth.local.hashed_password')
+            .one();
     });
     store.queryAccess('users', 'withUsername', function(username, accept, err) {
         return accept(true); // for now
@@ -50,9 +51,24 @@ var setupQueries = function(store) {
         return this
             .where('auth.local.email')
             .equals(email)
-            .only('auth.local.email').one();
+            .only('auth.local.email')
+            .one();
     });
     store.queryAccess('users', 'withEmail', function(email, accept, err) {
+        return accept(true); // for now
+    });
+
+    /**
+     * Find by email
+     */
+    store.query.expose('users', 'withEmail2', function(email) {
+        return this
+            .where('auth.local.email')
+            .equals(email)
+            .only('auth.local.email', 'auth.local.salt')
+            .one();
+    });
+    store.queryAccess('users', 'withEmail2', function(email, accept, err) {
         return accept(true); // for now
     });
 
@@ -64,7 +80,8 @@ var setupQueries = function(store) {
             .where('auth.local.username')
             .equals(username)
             .where('auth.local.hashed_password')
-            .equals(hashed_password);
+            .equals(hashed_password)
+            .one();
 
         // With this enabled, the query finds 0 results. I'm assuming where('..password') and only('..username') conflict.
         // It's ok, they'd have to know both uname & pw to hack this query anyway.
@@ -81,7 +98,8 @@ var setupQueries = function(store) {
         return this
             .where("auth." + provider + ".id")
             .equals(id)
-            .only("auth." + provider + ".id").limit(1);
+            .only("auth." + provider + ".id")
+            .one();
     });
     store.queryAccess('users', 'withProvider', function(provider, id, accept, err) {
         return accept(true); // for now

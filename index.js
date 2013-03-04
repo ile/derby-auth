@@ -57,9 +57,6 @@ function setupMiddleware(strategies, options) {
 
         model.set('_loggedIn', sess.passport && sess.passport.user);
 
-        // set any error / success messages
-        model.set('_flash', req.flash());
-
         // New User - They get to play around before creating a new account.
         function setupUser(err, user)
         {
@@ -112,25 +109,28 @@ function setupPassport(strategies, options) {
     //   with a user object.  In the real world, this would query a database;
     //   however, in this example we are using a baked-in set of users.
     passport.use(new LocalStrategy(
-        {passReqToCallback:true}, // required so we can access model.getModel()
-        function(req, username, password, done) {
+        {
+            usernameField: 'email',
+            passReqToCallback:true// required so we can access model.getModel()
+        },
+        function(req, email, password, done) {
             var model = req.getModel()
-            // Find the user by username.  If there is no user with the given
-            // username, or the password is not correct, set the user to `false` to
+            // Find the user by email.  If there is no user with the given
+            // email, or the password is not correct, set the user to `false` to
             // indicate failure and set a flash message.  Otherwise, return the
             // authenticated `user`.
-            var q = model.query('users').withUsername(username);
+            var q = model.query('users').withEmail2(email);
             q.fetch(function(err, result1){
                 if (err) return done(err); // real error
-                var u1 = result1.at(0).get()
-                if (!u1) return done(null, false, {message:'User not found with that username.'});// user not found
+                var u1 = result1.get()
+                if (!u1) return done(null, false, {message:'Sorry, the email address does not seem to exist.'});// user not found
 
                 // We needed the whole user object first so we can get his salt to encrypt password comparison
-                q = model.query('users').withLogin(username, utils.encryptPassword(password, u1.auth.local.salt));
+                q = model.query('users').withLogin(email, utils.encryptPassword(password, u1.auth.local.salt));
                 q.fetch(function(err, result2){
                     if (err) return done(err); // real error
                     if(process.env.NODE_ENV==='development') console.log(u2);
-                    var u2 = result2.at(0).get()
+                    var u2 = result2.get()
                     if (!u2) return done(null, false, {message:'Password incorrect.'});// user not found
                     _loginUser(model, u2, done);
                 });
@@ -163,9 +163,9 @@ function setupPassport(strategies, options) {
                 model.fetch(providerQ, currentUserQ, function(err, providerUser, currentUser) {
                     if (err) return done(err);
 
-                    var userObj = providerUser.at(0).get()
+                    var userObj = providerUser.get()
                     if (!userObj) {
-                        var currentUserScope = currentUser.at(0);
+                        var currentUserScope = currentUser;
                         currentUserScope.set('auth.' + profile.provider, profile);
                         currentUserScope.set('auth.timestamps.created', +new Date);
                         userObj = currentUserScope.get();
@@ -233,7 +233,7 @@ function setupStaticRoutes(expressApp, strategies, options) {
      }
      req.logIn(user, function(err) {
      if (err) { return next(err); }
-     return res.redirect('/users/' + user.username);
+     return res.redirect('/users/' + user.email);
      });
      })(req, res, next);
      });
@@ -243,11 +243,11 @@ function setupStaticRoutes(expressApp, strategies, options) {
         var model = req.getModel()
             , sess = model.session;
 
-        var q = model.query('users').withUsername(req.body.username);
+        var q = model.query('users').withEmail(req.body.email);
         q.fetch(function(err, result){
             if (err) return next(err)
 
-            var userObj = result.at(0).get();
+            var userObj = result.get();
 
             // current user already registered, return
             if (model.get('users.' + sess.userId + '.auth.local')) return res.redirect('/');
@@ -314,7 +314,7 @@ function setupStaticRoutes(expressApp, strategies, options) {
             hashed_password = utils.encryptPassword(newPassword, salt);
 
         model.fetch(model.query('users').withEmail(email), function(err, users){
-            if (!err && !(users.get()[0])) err = "Somethign went wrong resetting password for " + email + ". Couldn't find user for some reason.";
+            if (!err && !(users.get())) err = "Somethign went wrong resetting password for " + email + ". Couldn't find user for some reason.";
             if (err) {
                 console.log(err);
                 return res.send(500, e);
