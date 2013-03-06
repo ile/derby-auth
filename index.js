@@ -109,17 +109,18 @@ function setupPassport(strategies, options) {
     //   with a user object.  In the real world, this would query a database;
     //   however, in this example we are using a baked-in set of users.
     passport.use(new LocalStrategy(
-        {
-            usernameField: 'email',
+        _.defaults(options && options.local || {}, {
+            usernameField: 'user_name',
+            passwordField: 'password',
             passReqToCallback:true// required so we can access model.getModel()
-        },
+        }),
         function(req, email, password, done) {
             var model = req.getModel()
             // Find the user by email.  If there is no user with the given
             // email, or the password is not correct, set the user to `false` to
             // indicate failure and set a flash message.  Otherwise, return the
             // authenticated `user`.
-            var q = model.query('users').withEmail2(email);
+            var q = model.query('users').withEmail(email);
             q.fetch(function(err, result1){
                 if (err) return done(err); // real error
                 var u1 = result1.get()
@@ -244,33 +245,47 @@ function setupStaticRoutes(expressApp, strategies, options) {
             , sess = model.session;
 
         var q = model.query('users').withEmail(req.body.email);
+        var q2 = model.query('users').withUsername(req.body.user_name);
         q.fetch(function(err, result){
-            if (err) return next(err)
+            if (err) return next(err);
 
-            var userObj = result.get();
+            q2.fetch(function(err, result2){
+                if (err) return next(err);
 
-            // current user already registered, return
-            if (model.get('users.' + sess.userId + '.auth.local')) return res.redirect('/');
+                var userObj = result.get();
+                var userObj2 = result2.get();
 
-            if (userObj) {
-                // a user already registered with that name, TODO send error message
-                return res.redirect(options.failureRedirect);
-            } else {
-                // Legit, register
-                var salt = utils.makeSalt(),
-                    localAuth = {
-                        username: req.body.username,
-                        email: req.body.email,
-                        salt: salt,
-                        hashed_password: utils.encryptPassword(req.body.password, salt)
-                    };
-                model.set('users.' + sess.userId + '.auth.local', localAuth);
-                model.set('users.' + sess.userId + '.auth.timestamps.created', new Date());
-                req.login(sess.userId, function(err) {
-                    if (err) { return next(err); }
-                    return res.redirect('/');
-                });
-            }
+                // current user already registered, return
+                if (model.get('users.' + sess.userId + '.auth.local')) return res.redirect('/');
+
+                if (userObj || userObj2) {
+                    // a user already registered with that name, TODO send error message
+                    if (userObj){
+                        model.flash('error', 'Email already exists.')
+                    }
+
+                    if (userObj2){
+                        model.flash('error', 'Username already exists.')
+                    }
+
+                    return res.redirect(options.failureRedirect);
+                } else {
+                    // Legit, register
+                    var salt = utils.makeSalt(),
+                        localAuth = {
+                            username: req.body.user_name,
+                            email: req.body.email,
+                            salt: salt,
+                            hashed_password: utils.encryptPassword(req.body.password, salt)
+                        };
+                    model.set('users.' + sess.userId + '.auth.local', localAuth);
+                    model.set('users.' + sess.userId + '.auth.timestamps.created', new Date());
+                    req.login(sess.userId, function(err) {
+                        if (err) { return next(err); }
+                        return res.redirect('/');
+                    });
+                }
+            });
         });
     });
 

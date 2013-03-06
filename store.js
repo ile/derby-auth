@@ -51,7 +51,7 @@ var setupQueries = function(store) {
         return this
             .where('auth.local.email')
             .equals(email)
-            .only('auth.local.email')
+            .only('auth.local.email', 'auth.local.salt')
             .one();
     });
     store.queryAccess('users', 'withEmail', function(email, accept, err) {
@@ -59,26 +59,12 @@ var setupQueries = function(store) {
     });
 
     /**
-     * Find by email
+     * Find by username and password
      */
-    store.query.expose('users', 'withEmail2', function(email) {
+    store.query.expose('users', 'withLogin', function(email, hashed_password) {
         return this
             .where('auth.local.email')
             .equals(email)
-            .only('auth.local.email', 'auth.local.salt')
-            .one();
-    });
-    store.queryAccess('users', 'withEmail2', function(email, accept, err) {
-        return accept(true); // for now
-    });
-
-    /**
-     * Find by username and password
-     */
-    store.query.expose('users', 'withLogin', function(username, hashed_password) {
-        return this
-            .where('auth.local.username')
-            .equals(username)
             .where('auth.local.hashed_password')
             .equals(hashed_password)
             .one();
@@ -87,7 +73,7 @@ var setupQueries = function(store) {
         // It's ok, they'd have to know both uname & pw to hack this query anyway.
         //.only('auth.local.username').limit(1);
     });
-    store.queryAccess('users', 'withLogin', function(username, hashed_password, accept, err) {
+    store.queryAccess('users', 'withLogin', function(email, hashed_password, accept, err) {
         return accept(true); // for now
     });
 

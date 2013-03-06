@@ -36,7 +36,8 @@
         "mongoskin": "*",
         "nodemailer": "*",
         "validator": "*",
-        "express": "*"
+        "express": "*",
+        "derby-flash": "*"
     },
     "scripts": {
         "start": "node example/server.js"

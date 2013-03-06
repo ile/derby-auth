@@ -58,34 +58,48 @@ exports.create = function(model, dom) {
     })
 }
 
-exports.usernameBlur = function(){
+exports.usernameBlur = function(e, el){
     // check username not already registered
     var model = this.model,
         rootModel = model.parent().parent(),
-        q = rootModel.query('users').withUsername(model.get('username'));
-    rootModel.fetch(q, function(err, users) {
-        try {
-            if (err) throw new Error(err);
-            var userObj = users.get()
-            if (userObj) throw new Error('Username already taken');
-        } catch (err) {
-            model.set('errors.username', err.message);
-        }
-    });
+        username = el.value,
+        q = rootModel.query('users').withUsername(username);
+
+    if (!username) {
+        model.del('errors.username');
+    }
+    else {
+        rootModel.fetch(q, function(err, users) {
+            try {
+                if (err) throw new Error(err);
+                var userObj = users.get()
+                if (userObj) throw new Error('Username already taken');
+            } catch (err) {
+                model.set('errors.username', err.message);
+            }
+        });
+    }
 }
 
-exports.emailBlur = function(){
+exports.emailBlur = function(e, el){
     // check email not already registered
     var model = this.model,
         rootModel = model.parent().parent(),
-        q = rootModel.query('users').withEmail(model.get('email'));
-    rootModel.fetch(q, function(err, users) {
-        try {
-            if (err) throw new Error(err);
-            var userObj = users.get()
-            if (userObj) throw new Error('Email already taken');
-        } catch (err) {
-            model.set('errors.email', err.message);
-        }
-    });
+        email = el.value,
+        q = rootModel.query('users').withEmail(email);
+
+    if (!email) {
+        model.del('errors.email');
+    }
+    else {
+        rootModel.fetch(q, function(err, users) {
+            try {
+                if (err) throw new Error(err);
+                var userObj = users.get()
+                if (userObj) throw new Error('Email already taken');
+            } catch (err) {
+                model.set('errors.email', err.message);
+            }
+        });
+    }
 }
